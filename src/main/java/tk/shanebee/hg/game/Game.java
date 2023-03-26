@@ -1,5 +1,6 @@
 package tk.shanebee.hg.game;
 
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
@@ -28,6 +29,7 @@ import java.util.*;
  * General game object
  */
 @SuppressWarnings("unused")
+@Getter
 public class Game {
 
     final HG plugin;
