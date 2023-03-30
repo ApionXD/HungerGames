@@ -1,5 +1,7 @@
 package tk.shanebee.hg.game;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Location;
 import tk.shanebee.hg.Status;
 
@@ -9,6 +11,8 @@ import java.util.List;
 /**
  * Data class for holding a {@link Game Game's} general arena data
  */
+@Getter
+@Setter
 public class GameArenaData extends Data {
 
     final String name;

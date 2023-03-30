@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>tk.shanebee.hg</groupId>
-    <artifactId>HungerGames</artifactId>
-    <version>5.2.3</version>
+    <artifactId>hungergames</artifactId>
+    <version>5.2.4</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -154,6 +154,12 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -215,5 +221,12 @@
             </resource>
         </resources>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Apion Maven Packages</name>
+            <url>https://maven.pkg.github.com/ApionXD/HungerGames</url>
+        </repository>
+    </distributionManagement>
 
 </project>

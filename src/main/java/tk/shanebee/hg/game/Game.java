@@ -1,5 +1,7 @@
 package tk.shanebee.hg.game;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
@@ -28,6 +30,8 @@ import java.util.*;
  * General game object
  */
 @SuppressWarnings("unused")
+@Getter
+@Setter
 public class Game {
 
     final HG plugin;
@@ -72,7 +76,7 @@ public class Game {
     public Game(String name, Bound bound, List<Location> spawns, Sign lobbySign, int timer, int minPlayers, int maxPlayers, int roam, boolean isReady, int cost) {
         this(name, bound, timer, minPlayers, maxPlayers, roam, cost);
         gameArenaData.spawns.addAll(spawns);
-        this.gameBlockData.sign1 = lobbySign;
+        this.gameBlockData.setSign1(lobbySign);
 
         // If lobby signs are not properly setup, game is not ready
         if (!this.gameBlockData.setLobbyBlock(lobbySign)) {
@@ -191,7 +195,7 @@ public class Game {
      * @return Location of the lobby sign
      */
     public Location getLobbyLocation() {
-        return gameBlockData.sign1.getLocation();
+        return gameBlockData.getSign1().getLocation();
     }
 
     /**

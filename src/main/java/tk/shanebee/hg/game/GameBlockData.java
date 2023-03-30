@@ -1,5 +1,7 @@
 package tk.shanebee.hg.game;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,6 +23,8 @@ import java.util.List;
 /**
  * Data class for holding a {@link Game Game's} blocks
  */
+@Getter
+@Setter
 public class GameBlockData extends Data {
 
     private final List<Location> chests = new ArrayList<>();
@@ -29,7 +33,7 @@ public class GameBlockData extends Data {
     private final List<ItemFrameData> itemFrameData = new ArrayList<>();
 
     // LobbySign
-    Sign sign1;
+    private Sign sign1;
     private Sign sign2;
     private Sign sign3;
 
