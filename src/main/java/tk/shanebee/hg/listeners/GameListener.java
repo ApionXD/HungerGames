@@ -244,6 +244,32 @@ public class GameListener implements Listener {
 	}
 
 	@EventHandler
+	private void preventMovingForFrozenPlayers(PlayerMoveEvent event) {
+		final Player player = event.getPlayer();
+		if (playerManager.hasPlayerData(player)) {
+			final PlayerData data = playerManager.getPlayerData(player);
+			if (data == null || data.getGame() == null) {
+				return;
+			}
+
+			if (data.getGame().getGamePlayerData().playerIsFrozen(player)) {
+				if (event.getTo() == null) {
+					return;
+				}
+
+				final boolean playerIsLooking =
+						(event.getFrom().getX() == event.getTo().getX() &&
+						 event.getFrom().getY() == event.getTo().getY() &&
+						 event.getFrom().getZ() == event.getTo().getZ());
+				// If player is actually moving and not just looking around
+				if (!playerIsLooking) {
+					event.setCancelled(true);
+				}
+			}
+		}
+	}
+
+	@EventHandler
 	private void onSprint(FoodLevelChangeEvent event) {
 		Player player = (Player) event.getEntity();
 		if (playerManager.hasPlayerData(player)) {

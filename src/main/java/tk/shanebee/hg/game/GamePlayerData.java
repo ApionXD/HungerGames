@@ -41,6 +41,7 @@ public class GamePlayerData extends Data {
     // Data lists
     final Map<Player, Integer> kills = new HashMap<>();
     final Map<String, Team> teams = new HashMap<>();
+    final HashSet<UUID> frozenPlayers = new HashSet<>();
 
     protected GamePlayerData(Game game) {
         super(game);
@@ -57,6 +58,14 @@ public class GamePlayerData extends Data {
      */
     public List<UUID> getPlayers() {
         return players;
+    }
+
+    /**
+     * Returns if a player is in the frozenPlayers set
+     * @return true if player should be frozen, false if not
+     */
+    public boolean playerIsFrozen(final Player player) {
+        return this.frozenPlayers.contains(player.getUniqueId());
     }
 
     void clearPlayers() {
@@ -131,13 +140,7 @@ public class GamePlayerData extends Data {
      * @param player Player to freeze
      */
     public void freeze(Player player) {
-        player.setGameMode(GameMode.SURVIVAL);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 23423525, -10, false, false));
-        player.setWalkSpeed(0.0001F);
-        player.setFoodLevel(1);
-        player.setAllowFlight(false);
-        player.setFlying(false);
-        player.setInvulnerable(true);
+        frozenPlayers.add(player.getUniqueId());
     }
 
     /**
@@ -146,8 +149,7 @@ public class GamePlayerData extends Data {
      * @param player Player to unfreeze
      */
     public void unFreeze(Player player) {
-        player.removePotionEffect(PotionEffectType.JUMP);
-        player.setWalkSpeed(0.2F);
+        frozenPlayers.remove(player.getUniqueId());
     }
 
     /**
