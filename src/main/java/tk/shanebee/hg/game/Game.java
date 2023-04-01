@@ -12,6 +12,7 @@ import tk.shanebee.hg.data.Config;
 import tk.shanebee.hg.data.Language;
 import tk.shanebee.hg.data.Leaderboard;
 import tk.shanebee.hg.data.PlayerData;
+import tk.shanebee.hg.events.FreeRoamEvent;
 import tk.shanebee.hg.events.GameEndEvent;
 import tk.shanebee.hg.events.GameStartEvent;
 import tk.shanebee.hg.game.GameCommandData.CommandType;
@@ -242,6 +243,7 @@ public class Game {
      */
     public void startFreeRoam() {
         gameArenaData.status = Status.BEGINNING;
+        Bukkit.getPluginManager().callEvent(new FreeRoamEvent(this));
         gameBlockData.updateLobbyBlock();
         gameArenaData.bound.removeEntities();
         freeRoam = new FreeRoamTask(this);
