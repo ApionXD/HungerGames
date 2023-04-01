@@ -1,6 +1,7 @@
 package tk.shanebee.hg.game;
 
 import io.papermc.lib.PaperLib;
+import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -38,6 +39,7 @@ public class GamePlayerData extends Data {
     final List<UUID> spectators = new ArrayList<>();
     // This list contains all players who have joined the arena
     // Will be used to broadcast messages even if a player is no longer in the game
+    @Getter
     final List<UUID> allPlayers = new ArrayList<>();
 
     // Data lists
