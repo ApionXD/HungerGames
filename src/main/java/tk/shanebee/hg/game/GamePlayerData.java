@@ -8,8 +8,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
+import tk.shanebee.hg.HG;
 import tk.shanebee.hg.Status;
 import tk.shanebee.hg.data.Config;
 import tk.shanebee.hg.data.PlayerData;
@@ -22,6 +23,7 @@ import tk.shanebee.hg.util.Util;
 import tk.shanebee.hg.util.Vault;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Data class for holding a {@link Game Game's} players
@@ -185,18 +187,17 @@ public class GamePlayerData extends Data {
         }
     }
 
-    Location pickSpawn() {
+    synchronized Location pickSpawnAndPlaceInPlayerSpawnMap(final UUID forPlayer) {
         GameArenaData gameArenaData = game.getGameArenaData();
-        double spawn = getRandomIntegerBetweenRange(gameArenaData.maxPlayers - 1);
-        if (containsPlayer(gameArenaData.spawns.get(((int) spawn)))) {
-            Collections.shuffle(gameArenaData.spawns);
-            for (Location l : gameArenaData.spawns) {
-                if (!containsPlayer(l)) {
-                    return l;
-                }
-            }
-        }
-        return gameArenaData.spawns.get((int) spawn);
+        final List<Location> availableLocations = game.gameArenaData.spawns
+                .stream()
+                .filter(loc -> !gameArenaData.playerSpawnMap.containsKey(loc))
+                .collect(Collectors.toList());
+        final int maxBound = availableLocations.size();
+        int spawn = getRandomIntegerBetweenRange(maxBound - 1);
+        final Location location = availableLocations.get(spawn);
+        gameArenaData.playerSpawnMap.put(location, forPlayer);
+        return location;
     }
 
     boolean containsPlayer(Location location) {
@@ -278,67 +279,85 @@ public class GamePlayerData extends Data {
             players.add(uuid);
             allPlayers.add(uuid);
 
-            Location loc = pickSpawn();
+            Location loc = pickSpawnAndPlaceInPlayerSpawnMap(uuid);
             if (loc.getBlock().getRelative(BlockFace.DOWN).getType() == Material.AIR) {
                 while (loc.getBlock().getRelative(BlockFace.DOWN).getType() == Material.AIR) {
                     loc.setY(loc.getY() - 1);
                 }
             }
+
             Location previousLocation = player.getLocation();
+            boolean teleportSuccess = player.teleport(loc);
 
-            // Teleport async into the arena so it loads a little more smoothly
-            PaperLib.teleportAsync(player, loc).thenAccept(a -> {
+            if (!teleportSuccess) {
+                Bukkit.getLogger().severe("Player " + player.getName() + " teleport failed, setting task to try again every second.");
+                new BukkitRunnable() {
+                    final Player player = Bukkit.getPlayer(uuid);
+                    boolean teleportSuccess = false;
+                    @Override
+                    public void run() {
+                        if (player == null) {
+                            this.cancel();
+                            return;
+                        }
 
-                PlayerData playerData = new PlayerData(player, game);
-                if (command && Config.savePreviousLocation) {
-                    playerData.setPreviousLocation(previousLocation);
-                }
-                playerManager.addPlayerData(playerData);
-                gameArenaData.board.setBoard(player);
-
-                heal(player);
-                freeze(player);
-                kills.put(player, 0);
-
-                if (Config.enableleaveitem){
-                    ItemStack leaveitem = new ItemStack(Objects.requireNonNull(Material.getMaterial(Config.leaveitemtype)), 1);
-                    ItemMeta commeta = leaveitem.getItemMeta();
-                    assert commeta != null;
-                    commeta.setDisplayName(lang.leave_game);
-                    leaveitem.setItemMeta(commeta);
-                    player.getInventory().setItem(8, leaveitem);
-                }
-
-                if (Config.enableforcestartitem && player.hasPermission("hg.forcestart")) {
-                    ItemStack start = new ItemStack(Objects.requireNonNull(Material.getMaterial(Config.forcestartitem)), 1);
-                    ItemMeta meta = start.getItemMeta();
-                    assert meta != null;
-                    meta.setDisplayName(lang.force_start);
-                    start.setItemMeta(meta);
-                    player.getInventory().setItem(0, start);
-                }
-
-                if (players.size() == 1 && status == Status.READY)
-                    gameArenaData.setStatus(Status.WAITING);
-                if (players.size() >= game.gameArenaData.minPlayers && (status == Status.WAITING || status == Status.READY)) {
-                    game.startPreGame();
-                } else if (status == Status.WAITING) {
-                    String broadcast = lang.player_joined_game
-                            .replace("<arena>", gameArenaData.getName())
-                            .replace("<player>", player.getName()) + (gameArenaData.minPlayers - players.size() <= 0 ? "!" : ":" +
-                            lang.players_to_start.replace("<amount>", String.valueOf((gameArenaData.minPlayers - players.size()))));
-                    if (Config.broadcastJoinMessages) {
-                        Util.broadcast(broadcast);
-                    } else {
-                        msgAll(broadcast);
+                        teleportSuccess = player.teleport(loc);
+                        if (teleportSuccess) {
+                            this.cancel();
+                        }
                     }
-                }
-                kitHelp(player);
+                }.runTaskTimer(HG.getPlugin(), 0, 20L);
+            }
 
-                game.gameBlockData.updateLobbyBlock();
-                game.gameArenaData.updateBoards();
-                game.gameCommandData.runCommands(CommandType.JOIN, player);
-            });
+            PlayerData playerData = new PlayerData(player, game);
+            if (command && Config.savePreviousLocation) {
+                playerData.setPreviousLocation(previousLocation);
+            }
+            playerManager.addPlayerData(playerData);
+            gameArenaData.board.setBoard(player);
+
+            heal(player);
+            freeze(player);
+            kills.put(player, 0);
+
+            if (Config.enableleaveitem){
+                ItemStack leaveitem = new ItemStack(Objects.requireNonNull(Material.getMaterial(Config.leaveitemtype)), 1);
+                ItemMeta commeta = leaveitem.getItemMeta();
+                assert commeta != null;
+                commeta.setDisplayName(lang.leave_game);
+                leaveitem.setItemMeta(commeta);
+                player.getInventory().setItem(8, leaveitem);
+            }
+
+            if (Config.enableforcestartitem && player.hasPermission("hg.forcestart")) {
+                ItemStack start = new ItemStack(Objects.requireNonNull(Material.getMaterial(Config.forcestartitem)), 1);
+                ItemMeta meta = start.getItemMeta();
+                assert meta != null;
+                meta.setDisplayName(lang.force_start);
+                start.setItemMeta(meta);
+                player.getInventory().setItem(0, start);
+            }
+
+            if (players.size() == 1 && status == Status.READY)
+                gameArenaData.setStatus(Status.WAITING);
+            if (players.size() >= game.gameArenaData.minPlayers && (status == Status.WAITING || status == Status.READY)) {
+                game.startPreGame();
+            } else if (status == Status.WAITING) {
+                String broadcast = lang.player_joined_game
+                        .replace("<arena>", gameArenaData.getName())
+                        .replace("<player>", player.getName()) + (gameArenaData.minPlayers - players.size() <= 0 ? "!" : ":" +
+                        lang.players_to_start.replace("<amount>", String.valueOf((gameArenaData.minPlayers - players.size()))));
+                if (Config.broadcastJoinMessages) {
+                    Util.broadcast(broadcast);
+                } else {
+                    msgAll(broadcast);
+                }
+            }
+            kitHelp(player);
+
+            game.gameBlockData.updateLobbyBlock();
+            game.gameArenaData.updateBoards();
+            game.gameCommandData.runCommands(CommandType.JOIN, player);
         }
     }
 
@@ -350,6 +369,15 @@ public class GamePlayerData extends Data {
      */
     public void leave(Player player, Boolean death) {
         Bukkit.getPluginManager().callEvent(new PlayerLeaveGameEvent(game, player, death));
+        Status status = game.getGameArenaData().getStatus();
+        if (status.equals(Status.BEGINNING) || status.equals(Status.WAITING)) {
+            //Makes the spawn that the player is in available again
+            game.gameArenaData.playerSpawnMap.entrySet().stream()
+                    .filter(playerUuidSpawn -> Objects.equals(playerUuidSpawn.getValue(), player.getUniqueId()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .ifPresent(loc -> game.gameArenaData.playerSpawnMap.remove(loc));
+        }
         UUID uuid = player.getUniqueId();
         players.remove(uuid);
         if (!death) allPlayers.remove(uuid); // Only remove the player if they voluntarily left the game
@@ -481,8 +509,8 @@ public class GamePlayerData extends Data {
     }
 
     // UTIL
-    private static double getRandomIntegerBetweenRange(double max) {
-        return (int) (Math.random() * ((max - (double) 0) + 1)) + (double) 0;
+    private static int getRandomIntegerBetweenRange(double max) {
+        return (int) ((Math.random() * ((max - (double) 0) + 1)) + (double) 0);
     }
 
 }

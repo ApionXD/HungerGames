@@ -193,7 +193,7 @@ public class GameListener implements Listener {
         return inv.getItemInOffHand() != null && inv.getItemInOffHand().getType() == Material.TOTEM_OF_UNDYING;
     }
 
-	private void processDeath(Player player, Game game, Entity damager, EntityDamageEvent.DamageCause cause) {
+	private void  processDeath(Player player, Game game, Entity damager, EntityDamageEvent.DamageCause cause) {
 		dropInv(player);
 		player.setHealth(20);
 		Bukkit.getScheduler().runTaskLater(plugin, () -> {

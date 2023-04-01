@@ -1,11 +1,13 @@
 package tk.shanebee.hg.events;
 
+import io.lumine.mythic.bukkit.utils.Players;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import tk.shanebee.hg.game.Game;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Called when a game ends

@@ -6,7 +6,10 @@ import org.bukkit.Location;
 import tk.shanebee.hg.Status;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Data class for holding a {@link Game Game's} general arena data
@@ -23,6 +26,8 @@ public class GameArenaData extends Data {
     private final int roamTime;
     int cost;
     final List<Location> spawns;
+    @Getter
+    Map<Location, UUID> playerSpawnMap;
     Location exit;
     Status status;
     int chestRefillTime = 0;
@@ -39,6 +44,7 @@ public class GameArenaData extends Data {
         this.roamTime = roamTime;
         this.cost = cost;
         this.spawns = new ArrayList<>();
+        this.playerSpawnMap = new HashMap<>();
         this.board = new Board(game);
     }
 
@@ -225,4 +231,5 @@ public class GameArenaData extends Data {
         game.gameArenaData.board.updateBoard();
     }
 
+    public void clearPlayerSpawnMap() { playerSpawnMap.clear(); }
 }

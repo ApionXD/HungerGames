@@ -381,6 +381,8 @@ public class Game {
         gamePlayerData.clearPlayers();
         gamePlayerData.clearSpectators();
         gamePlayerData.clearTeams();
+        gameArenaData.clearPlayerSpawnMap();
+
         Bukkit.getPluginManager().callEvent(new GameEndEvent(this, winners, death));
     }
 
