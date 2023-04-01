@@ -119,7 +119,7 @@ public class GamePlayerData extends Data {
         for (UUID u : players) {
             Player p = Bukkit.getPlayer(u);
             if (p != null)
-                PaperLib.teleportAsync(p, pickSpawn());
+                PaperLib.teleportAsync(p, pickSpawnAndPlaceInPlayerSpawnMap(u));
         }
     }
 
@@ -417,7 +417,7 @@ public class GamePlayerData extends Data {
         } else if (gameArenaData.exit != null && gameArenaData.exit.getWorld() != null) {
             loc = gameArenaData.exit;
         } else {
-            Location worldSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+            Location worldSpawn = player.getWorld().getSpawnLocation();
             Location bedLocation = player.getBedSpawnLocation();
             loc = bedLocation != null ? bedLocation : worldSpawn;
         }
